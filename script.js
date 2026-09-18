@@ -1,12 +1,29 @@
 const backgroundMusic = new Audio("./music.mp3");
 
+const musicButton = document.getElementById("music-button");
+let musicEnabled = true;
+
+musicButton.addEventListener("click", () => {
+  musicEnabled = !musicEnabled;
+
+  if (musicEnabled) {
+    backgroundMusic.play();
+    musicButton.textContent = "🔊 Music: On";
+  } else {
+    backgroundMusic.pause();
+    musicButton.textContent = "🔇 Music: Off";
+  }
+});
+
 backgroundMusic.loop = true;
 backgroundMusic.volume = 0.4;
 
 const game = document.getElementById("game");
 const playerElement = document.getElementById("player");
 
+const timeElement = document.getElementById("time");
 const scoreElement = document.getElementById("score");
+const finalTimeElement = document.getElementById("final-time");
 const finalScoreElement = document.getElementById("final-score");
 
 const gameOverElement = document.getElementById("game-over");
@@ -15,18 +32,21 @@ const restartButton = document.getElementById("restart-button");
 const GRAVITY = 0.7; // distance between frog in jump vs obstacle
 const JUMP_FORCE = 13;
 
-const PLAYER_X = 100; // player does not move, only jump over obstacles
+const PLAYER = 100; // player does not move, only jump over obstacles
 
 const GROUND_HEIGHT = 40;
 
 const OBSTACLE_SPEED = 6;
 
-let playerY = 0; // player is 0 above the ground so basically standing on the ground
-let playerVelocityY = 0; // initial vertical speed
+let player = 0; // player is 0 above the ground so basically standing on the ground
+let playerVelocity = 0; // initial vertical speed
 
 let isJumping = false;
 
 let obstacles = [];
+
+let time = 0;
+let startTime = null;
 
 let score = 0;
 
@@ -38,27 +58,30 @@ let animationId;
 
 function jump() {
   if (!isJumping) {
-    backgroundMusic.play();
+    if (musicEnabled) {
+      backgroundMusic.play();
+    }
 
-    playerVelocityY = JUMP_FORCE; // jumping only when on the ground, no double jumps
+    playerVelocity = JUMP_FORCE; // jumping only when on the ground (velocityY=0), no double jumps
     isJumping = true;
   }
 }
 
 function updatePlayer() {
-  playerVelocityY -= GRAVITY; //positive velocity = moving up, negative = moving down
+  playerVelocity -= GRAVITY; // gravity downgrades velocity by 0.7
 
-  playerY += playerVelocityY;
+  player += playerVelocity; // after a jump it's +13 (moving up), moving up until positive, moving down when negative
 
-  if (playerY <= 0) { // player hits the ground
-    playerY = 0;
+  if (player <= 0) {
+    // player hits the ground
+    player = 0;
 
-    playerVelocityY = 0;
+    playerVelocity = 0;
 
     isJumping = false;
   }
 
-  playerElement.style.bottom = `${GROUND_HEIGHT + playerY}px`; //positioning player
+  playerElement.style.bottom = `${GROUND_HEIGHT + player}px`; //positioning player
 }
 
 function createObstacle() {
@@ -90,6 +113,7 @@ function updateObstacles() {
     obstacle.element.style.left = `${obstacle.x}px`;
 
     if (obstacle.x + obstacle.width < 0) {
+      // when moved fully to the left side of the screen
       obstacle.element.remove();
 
       obstacles.splice(i, 1);
@@ -97,20 +121,29 @@ function updateObstacles() {
       continue;
     }
 
-    if (checkCollision(obstacle)) {
+    if (detectCollision(obstacle)) {
       endGame();
 
       return;
     }
+
+    if (!obstacle.passed && obstacle.x + obstacle.width < PLAYER) {
+      obstacle.passed = true;
+
+      score += 1;
+
+      scoreElement.textContent = score;
+    }
   }
 }
 
-function checkCollision(obstacle) {
-  const playerLeft = PLAYER_X;
+function detectCollision(obstacle) {
+  // AABB overlap test:
+  const playerLeft = PLAYER;
 
-  const playerRight = PLAYER_X + 60;
+  const playerRight = PLAYER + 60;
 
-  const playerBottom = playerY + GROUND_HEIGHT;
+  const playerBottom = player + GROUND_HEIGHT;
 
   const playerTop = playerBottom + 60;
 
@@ -130,13 +163,17 @@ function checkCollision(obstacle) {
   );
 }
 
-function updateScore() {
-  score += 1;
+function updateTimeSurvived(timestamp) {
+  if (startTime === null) {
+    startTime = timestamp;
+  }
 
-  scoreElement.textContent = Math.floor(score / 10);
+  time = Math.floor((timestamp - startTime) / 1000);
+  timeElement.textContent = time;
 }
 
-function spawnObstacles(timestamp) {
+function displayNewObstacle(timestamp) {
+  // steady rhythm of one new obstacle
   if (timestamp - lastObstacleTime < 1500) {
     return;
   }
@@ -155,9 +192,9 @@ function gameLoop(timestamp) {
 
   updateObstacles();
 
-  spawnObstacles(timestamp);
+  displayNewObstacle(timestamp);
 
-  updateScore();
+  updateTimeSurvived(timestamp);
 
   animationId = requestAnimationFrame(gameLoop);
 }
@@ -167,7 +204,8 @@ function endGame() {
 
   backgroundMusic.pause();
 
-  finalScoreElement.textContent = Math.floor(score / 10);
+  finalTimeElement.textContent = time;
+  finalScoreElement.textContent = score;
 
   gameOverElement.style.display = "flex";
 
@@ -181,16 +219,17 @@ function restartGame() {
 
   obstacles = [];
 
-  playerY = 0;
-
-  playerVelocityY = 0;
-
+  player = 0;
+  playerVelocity = 0;
   isJumping = false;
 
+  time = 0;
   score = 0;
 
+  timeElement.textContent = "0";
   scoreElement.textContent = "0";
 
+  startTime = null;
   lastObstacleTime = 0;
 
   gameOverElement.style.display = "none";

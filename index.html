@@ -14,6 +14,10 @@
   <body>
     <main class="game-container">
       <h1>Crazy Frog</h1>
+      <button id="music-button">🔊 Music: On</button>
+      <div class="score-container">
+        Time survived: <span id="time">0</span>s
+      </div>
 
       <div class="score-container">Score: <span id="score">0</span></div>
 
@@ -24,7 +28,17 @@
 
         <div id="game-over">
           <h2>Game Over!</h2>
-          <p>Score: <span id="final-score">0</span></p>
+
+          <p>
+            You survived:
+            <span id="final-time">0</span> seconds!
+          </p>
+
+          <p>
+            Score:
+            <span id="final-score">0</span>
+          </p>
+
           <button id="restart-button">Restart</button>
         </div>
       </div>
