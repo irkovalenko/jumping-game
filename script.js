@@ -29,17 +29,17 @@ const finalScoreElement = document.getElementById("final-score");
 const gameOverElement = document.getElementById("game-over");
 const restartButton = document.getElementById("restart-button");
 
-const GRAVITY = 0.7; // distance between frog in jump vs obstacle
+const GRAVITY = 0.7;
 const JUMP_FORCE = 13;
 
-const PLAYER = 100; // player does not move, only jump over obstacles
+const PLAYER = 100;
 
 const GROUND_HEIGHT = 40;
 
 const OBSTACLE_SPEED = 6;
 
-let player = 0; // player is 0 above the ground so basically standing on the ground
-let playerVelocity = 0; // initial vertical speed
+let player = 0;
+let playerVelocity = 0;
 
 let isJumping = false;
 
@@ -62,18 +62,17 @@ function jump() {
       backgroundMusic.play();
     }
 
-    playerVelocity = JUMP_FORCE; // jumping only when on the ground (velocityY=0), no double jumps
+    playerVelocity = JUMP_FORCE;
     isJumping = true;
   }
 }
 
 function updatePlayer() {
-  playerVelocity -= GRAVITY; // gravity downgrades velocity by 0.7
+  playerVelocity -= GRAVITY;
 
-  player += playerVelocity; // after a jump it's +13 (moving up), moving up until positive, moving down when negative
+  player += playerVelocity;
 
   if (player <= 0) {
-    // player hits the ground
     player = 0;
 
     playerVelocity = 0;
@@ -81,7 +80,7 @@ function updatePlayer() {
     isJumping = false;
   }
 
-  playerElement.style.bottom = `${GROUND_HEIGHT + player}px`; //positioning player
+  playerElement.style.bottom = `${GROUND_HEIGHT + player}px`;
 }
 
 function createObstacle() {
@@ -113,7 +112,6 @@ function updateObstacles() {
     obstacle.element.style.left = `${obstacle.x}px`;
 
     if (obstacle.x + obstacle.width < 0) {
-      // when moved fully to the left side of the screen
       obstacle.element.remove();
 
       obstacles.splice(i, 1);
@@ -173,7 +171,6 @@ function updateTimeSurvived(timestamp) {
 }
 
 function displayNewObstacle(timestamp) {
-  // steady rhythm of one new obstacle
   if (timestamp - lastObstacleTime < 1500) {
     return;
   }
